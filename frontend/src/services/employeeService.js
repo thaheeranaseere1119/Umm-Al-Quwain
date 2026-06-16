@@ -150,6 +150,43 @@ const deleteFileFromFirebase = async (url) => {
   }
 };
 
+// Helper to merge employee lists from local cache and server list (for Vercel instances sync)
+const mergeEmployeeLists = (localList, serverList) => {
+  const map = new Map();
+  
+  // Retrieve deleted/tombstoned IDs from localStorage
+  let deletedIds = [];
+  try {
+    const deletedData = localStorage.getItem("ummal_quwain_deleted_ids");
+    deletedIds = deletedData ? JSON.parse(deletedData) : [];
+  } catch (err) {
+    console.error("Failed to parse deleted IDs:", err);
+  }
+  const deletedSet = new Set(deletedIds);
+
+  const addOrUpdate = (emp) => {
+    if (!emp || !emp.id) return;
+    if (deletedSet.has(emp.id)) return; // Don't add back deleted employees
+
+    const existing = map.get(emp.id);
+    if (!existing) {
+      map.set(emp.id, emp);
+    } else {
+      // Keep the one with the latest updatedAt or createdAt
+      const dateA = new Date(existing.updatedAt || existing.createdAt || 0);
+      const dateB = new Date(emp.updatedAt || emp.createdAt || 0);
+      if (dateB > dateA) {
+        map.set(emp.id, emp);
+      }
+    }
+  };
+
+  localList.forEach(addOrUpdate);
+  serverList.forEach(addOrUpdate);
+
+  return Array.from(map.values());
+};
+
 // GET Employees
 export const getEmployees = async () => {
   if (!USE_FIREBASE) {
@@ -157,32 +194,31 @@ export const getEmployees = async () => {
     if (!res.ok) throw new Error("Failed to fetch employees");
     const serverEmployees = await res.json();
 
-    // Check if server is running in local fallback and is empty, but we have cached employees
     const cachedData = localStorage.getItem("ummal_quwain_employees");
     const cachedEmployees = cachedData ? JSON.parse(cachedData) : [];
 
-    if (serverEmployees.length === 0 && cachedEmployees.length > 0) {
-      console.log("⚠️ Vercel database was reset. Restoring from localStorage...");
+    // Merge cached and server lists
+    const mergedEmployees = mergeEmployeeLists(cachedEmployees, serverEmployees);
+
+    // If the server list was missing elements that we had locally (and weren't deleted), sync the server
+    if (serverEmployees.length < mergedEmployees.length) {
+      console.log(`⚠️ Server database out of sync (missing ${mergedEmployees.length - serverEmployees.length} employees). Restoring...`);
       try {
-        const restoreRes = await fetch("/api/employees/restore", {
+        await fetch("/api/employees/restore", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ employees: cachedEmployees }),
+          body: JSON.stringify({ employees: mergedEmployees }),
         });
-        if (restoreRes.ok) {
-          console.log("✅ Vercel database restored successfully.");
-          return cachedEmployees;
-        }
       } catch (err) {
-        console.error("Failed to restore backend database from localStorage:", err);
+        console.error("Failed to restore backend database:", err);
       }
     }
 
     // Keep cache updated
-    localStorage.setItem("ummal_quwain_employees", JSON.stringify(serverEmployees));
-    return serverEmployees;
+    localStorage.setItem("ummal_quwain_employees", JSON.stringify(mergedEmployees));
+    return mergedEmployees;
   }
 
   try {
@@ -534,6 +570,14 @@ export const deleteEmployee = async (employee) => {
       const cached = cachedData ? JSON.parse(cachedData) : [];
       const filtered = cached.filter(emp => emp.id !== employee.id);
       localStorage.setItem("ummal_quwain_employees", JSON.stringify(filtered));
+
+      // Save deleted ID as tombstone so it doesn't get merged back
+      const deletedData = localStorage.getItem("ummal_quwain_deleted_ids");
+      const deletedIds = deletedData ? JSON.parse(deletedData) : [];
+      if (!deletedIds.includes(employee.id)) {
+        deletedIds.push(employee.id);
+        localStorage.setItem("ummal_quwain_deleted_ids", JSON.stringify(deletedIds));
+      }
     } catch (err) {
       console.error("Failed to sync deleted employee to localStorage:", err);
     }
@@ -568,9 +612,22 @@ export const deleteEmployee = async (employee) => {
 // GET Stats
 export const getStats = async () => {
   if (!USE_FIREBASE) {
-    const res = await fetch("/api/employees/stats");
-    if (!res.ok) throw new Error("Failed to fetch statistics");
-    return await res.json();
+    const cachedData = localStorage.getItem("ummal_quwain_employees");
+    const employees = cachedData ? JSON.parse(cachedData) : [];
+    
+    const total = employees.length;
+    const male = employees.filter((emp) => emp.gender === "Male").length;
+    const female = employees.filter((emp) => emp.gender === "Female").length;
+    const married = employees.filter((emp) => emp.status === "Married").length;
+    const single = employees.filter((emp) => emp.status === "Single").length;
+
+    return {
+      total,
+      male,
+      female,
+      married,
+      single,
+    };
   }
 
   try {
