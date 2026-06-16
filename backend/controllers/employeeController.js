@@ -584,3 +584,18 @@ export const getExpiringDocuments = async (req, res) => {
     res.status(500).json({ message: "Failed to check document expiries", error: error.message });
   }
 };
+
+// Endpoint to restore backup database on Vercel restart
+export const restoreEmployees = async (req, res) => {
+  try {
+    const { employees } = req.body;
+    if (useLocalFallback) {
+      localDb.saveEmployees(employees || []);
+      console.log(`[Backup Sync] Successfully restored ${employees ? employees.length : 0} employees.`);
+    }
+    res.status(200).json({ success: true });
+  } catch (error) {
+    console.error("Restore error:", error);
+    res.status(500).json({ message: "Failed to restore database", error: error.message });
+  }
+};

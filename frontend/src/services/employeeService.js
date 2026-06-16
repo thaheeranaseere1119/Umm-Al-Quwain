@@ -155,7 +155,34 @@ export const getEmployees = async () => {
   if (!USE_FIREBASE) {
     const res = await fetch("/api/employees");
     if (!res.ok) throw new Error("Failed to fetch employees");
-    return await res.json();
+    const serverEmployees = await res.json();
+
+    // Check if server is running in local fallback and is empty, but we have cached employees
+    const cachedData = localStorage.getItem("ummal_quwain_employees");
+    const cachedEmployees = cachedData ? JSON.parse(cachedData) : [];
+
+    if (serverEmployees.length === 0 && cachedEmployees.length > 0) {
+      console.log("⚠️ Vercel database was reset. Restoring from localStorage...");
+      try {
+        const restoreRes = await fetch("/api/employees/restore", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ employees: cachedEmployees }),
+        });
+        if (restoreRes.ok) {
+          console.log("✅ Vercel database restored successfully.");
+          return cachedEmployees;
+        }
+      } catch (err) {
+        console.error("Failed to restore backend database from localStorage:", err);
+      }
+    }
+
+    // Keep cache updated
+    localStorage.setItem("ummal_quwain_employees", JSON.stringify(serverEmployees));
+    return serverEmployees;
   }
 
   try {
@@ -225,6 +252,16 @@ export const createEmployee = async (employeeData, files, onProgressCallback) =>
       xhr.onload = () => {
         const response = JSON.parse(xhr.responseText);
         if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            const cachedData = localStorage.getItem("ummal_quwain_employees");
+            const cached = cachedData ? JSON.parse(cachedData) : [];
+            if (response.employee) {
+              cached.push(response.employee);
+              localStorage.setItem("ummal_quwain_employees", JSON.stringify(cached));
+            }
+          } catch (err) {
+            console.error("Failed to sync new employee to localStorage:", err);
+          }
           resolve(response);
         } else {
           reject(new Error(response.message || "Failed to create employee"));
@@ -349,6 +386,17 @@ export const updateEmployee = async (id, employeeData, files, existingDocs, onPr
       xhr.onload = () => {
         const response = JSON.parse(xhr.responseText);
         if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            const cachedData = localStorage.getItem("ummal_quwain_employees");
+            const cached = cachedData ? JSON.parse(cachedData) : [];
+            const index = cached.findIndex(emp => emp.id === id);
+            if (index !== -1 && response.employee) {
+              cached[index] = response.employee;
+              localStorage.setItem("ummal_quwain_employees", JSON.stringify(cached));
+            }
+          } catch (err) {
+            console.error("Failed to sync updated employee to localStorage:", err);
+          }
           resolve(response);
         } else {
           reject(new Error(response.message || "Failed to update employee"));
@@ -466,7 +514,16 @@ export const deleteEmployee = async (employee) => {
       method: "DELETE",
     });
     if (!res.ok) throw new Error("Failed to delete employee");
-    return await res.json();
+    const response = await res.json();
+    try {
+      const cachedData = localStorage.getItem("ummal_quwain_employees");
+      const cached = cachedData ? JSON.parse(cachedData) : [];
+      const filtered = cached.filter(emp => emp.id !== employee.id);
+      localStorage.setItem("ummal_quwain_employees", JSON.stringify(filtered));
+    } catch (err) {
+      console.error("Failed to sync deleted employee to localStorage:", err);
+    }
+    return response;
   }
 
   try {

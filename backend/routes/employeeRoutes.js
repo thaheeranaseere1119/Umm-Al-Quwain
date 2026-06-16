@@ -11,6 +11,7 @@ import {
   deleteEmployee,
   getStats,
   getExpiringDocuments,
+  restoreEmployees,
 } from "../controllers/employeeController.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -66,6 +67,7 @@ router.get("/stats", getStats);
 router.get("/expiring", getExpiringDocuments);
 router.get("/", getEmployees);
 router.get("/:id", getEmployeeById);
+router.post("/restore", restoreEmployees);
 router.post("/", documentUpload, createEmployee);
 router.put("/:id", documentUpload, updateEmployee);
 router.delete("/:id", deleteEmployee);
