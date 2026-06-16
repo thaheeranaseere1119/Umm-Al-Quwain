@@ -248,6 +248,7 @@ export const createEmployee = async (req, res) => {
         medicalInsurance: null,
         passport: null,
         labourContract: null,
+        visa: null,
       };
 
       if (req.files) {
@@ -278,6 +279,10 @@ export const createEmployee = async (req, res) => {
           uploadPromises.push(handleFileUpload(req.files.labourContract[0], salaryNo, "labour_contract", serverUrl));
           fileKeys.push("labourContract");
         }
+        if (req.files.visa) {
+          uploadPromises.push(handleFileUpload(req.files.visa[0], salaryNo, "visa", serverUrl));
+          fileKeys.push("visa");
+        }
 
         const uploadedUrls = await Promise.all(uploadPromises);
         fileKeys.forEach((key, index) => {
@@ -304,6 +309,7 @@ export const createEmployee = async (req, res) => {
           medicalInsurance: req.body.expiry_medicalInsurance || "",
           passport: req.body.expiry_passport || "",
           labourContract: req.body.expiry_labourContract || "",
+          visa: req.body.expiry_visa || "",
         },
         documents,
         createdAt: new Date().toISOString(),
@@ -428,6 +434,10 @@ export const updateEmployee = async (req, res) => {
           updatePromises.push(updateField("labourContract", req.files.labourContract[0], "labour_contract"));
           fileKeys.push("labourContract");
         }
+        if (req.files.visa) {
+          updatePromises.push(updateField("visa", req.files.visa[0], "visa"));
+          fileKeys.push("visa");
+        }
 
         const uploadedUrls = await Promise.all(updatePromises);
         fileKeys.forEach((key, index) => {
@@ -454,6 +464,7 @@ export const updateEmployee = async (req, res) => {
           medicalInsurance: req.body.expiry_medicalInsurance !== undefined ? req.body.expiry_medicalInsurance : (existingEmployee.documentExpiry?.medicalInsurance || ""),
           passport: req.body.expiry_passport !== undefined ? req.body.expiry_passport : (existingEmployee.documentExpiry?.passport || ""),
           labourContract: req.body.expiry_labourContract !== undefined ? req.body.expiry_labourContract : (existingEmployee.documentExpiry?.labourContract || ""),
+          visa: req.body.expiry_visa !== undefined ? req.body.expiry_visa : (existingEmployee.documentExpiry?.visa || ""),
         },
         documents: updatedDocuments,
         updatedAt: new Date().toISOString(),
@@ -511,6 +522,7 @@ export const deleteEmployee = async (req, res) => {
           handleFileDelete(employee.documents.medicalInsurance),
           handleFileDelete(employee.documents.passport),
           handleFileDelete(employee.documents.labourContract),
+          handleFileDelete(employee.documents.visa),
         ]);
       } catch (fileErr) {
         console.error("Error deleting employee documents:", fileErr.message);

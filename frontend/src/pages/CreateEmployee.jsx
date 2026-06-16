@@ -43,6 +43,7 @@ const CreateEmployee = () => {
     expiry_medicalInsurance: "",
     expiry_passport: "",
     expiry_labourContract: "",
+    expiry_visa: "",
   });
 
   // Files state
@@ -53,6 +54,7 @@ const CreateEmployee = () => {
     labourContract: null,
     medicalInsurance: null,
     passport: null,
+    visa: null,
   });
 
   // Previews
@@ -63,6 +65,7 @@ const CreateEmployee = () => {
     labourContract: null,
     medicalInsurance: null,
     passport: null,
+    visa: null,
   });
 
   // Upload/Save progress state
@@ -139,6 +142,7 @@ const CreateEmployee = () => {
       expiry_medicalInsurance: "",
       expiry_passport: "",
       expiry_labourContract: "",
+      expiry_visa: "",
     });
     setFiles({
       profilePic: null,
@@ -147,6 +151,7 @@ const CreateEmployee = () => {
       labourContract: null,
       medicalInsurance: null,
       passport: null,
+      visa: null,
     });
     setPreviews({
       profilePic: null,
@@ -155,6 +160,7 @@ const CreateEmployee = () => {
       labourContract: null,
       medicalInsurance: null,
       passport: null,
+      visa: null,
     });
     setErrorMessage("");
     setSuccessMessage("");
@@ -175,9 +181,9 @@ const CreateEmployee = () => {
     if (!formData.gender) return setErrorMessage("Gender selection is required.");
     if (!formData.salaryNo.trim()) return setErrorMessage("Salary Number is required.");
 
-    // Check if all required documents are uploaded (Profile Photo, Emirates ID, Labour Card, Labour Contract, Medical Insurance, Passport)
-    if (!files.profilePic || !files.emiratesId || !files.labourCard || !files.labourContract || !files.medicalInsurance || !files.passport) {
-      return setErrorMessage("Please upload all required documents (Profile Photo, Emirates ID, Labour Card, Labour Contract, Medical Insurance, and Passport).");
+    // Check if all required documents are uploaded (Profile Photo, Emirates ID, Labour Card, Labour Contract, Medical Insurance, Passport, Visa)
+    if (!files.profilePic || !files.emiratesId || !files.labourCard || !files.labourContract || !files.medicalInsurance || !files.passport || !files.visa) {
+      return setErrorMessage("Please upload all required documents (Profile Photo, Emirates ID, Labour Card, Labour Contract, Medical Insurance, Passport, and Visa).");
     }
 
     setIsSubmitting(true);
@@ -502,6 +508,7 @@ const CreateEmployee = () => {
   { label: "Labour Contract *", key: "labourContract" },
   { label: "Medical Insurance *", key: "medicalInsurance" },
   { label: "Passport *", key: "passport" },
+  { label: "Visa Expiry Doc *", key: "visa" },
 ].map((doc) => (
                 <div key={doc.key} className="border border-white/10 rounded-lg p-3 flex flex-col justify-between h-44 bg-white/5 text-white">
                   <span className="text-[11px] font-semibold text-slate-300 truncate">{doc.label}</span>

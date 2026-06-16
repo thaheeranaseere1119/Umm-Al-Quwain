@@ -339,9 +339,10 @@ export const createEmployee = async (employeeData, files, onProgressCallback) =>
       medicalInsurance: null,
       passport: null,
       labourContract: null,
+      visa: null,
     };
 
-    const fileKeys = ["profilePic", "emiratesId", "labourCard", "medicalInsurance", "passport", "labourContract"];
+    const fileKeys = ["profilePic", "emiratesId", "labourCard", "medicalInsurance", "passport", "labourContract", "visa"];
     const fileCount = fileKeys.filter((k) => files[k]).length;
     let completedCount = 0;
 
@@ -487,7 +488,7 @@ export const updateEmployee = async (id, employeeData, files, existingDocs, onPr
 
     // 2. Upload replacement files
     const updatedDocs = { ...existingDocs };
-    const fileKeys = ["profilePic", "emiratesId", "labourCard", "medicalInsurance", "passport", "labourContract"];
+    const fileKeys = ["profilePic", "emiratesId", "labourCard", "medicalInsurance", "passport", "labourContract", "visa"];
     const filesToUpload = fileKeys.filter((k) => files[k]);
     const fileCount = filesToUpload.length;
     let completedCount = 0;
@@ -593,6 +594,7 @@ export const deleteEmployee = async (employee) => {
       await deleteFileFromFirebase(employee.documents.medicalInsurance);
       await deleteFileFromFirebase(employee.documents.passport);
       await deleteFileFromFirebase(employee.documents.labourContract);
+      await deleteFileFromFirebase(employee.documents.visa);
     }
 
     // 2. Delete Firestore record

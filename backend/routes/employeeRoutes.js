@@ -60,6 +60,7 @@ const documentUpload = upload.fields([
   { name: "medicalInsurance", maxCount: 1 },
   { name: "passport", maxCount: 1 },
   { name: "labourContract", maxCount: 1 },
+  { name: "visa", maxCount: 1 },
 ]);
 
 // Routes

@@ -45,6 +45,7 @@ const EmployeeModal = ({ employeeId, mode, onClose, onSaveSuccess }) => {
     expiry_medicalInsurance: "",
     expiry_passport: "",
     expiry_labourContract: "",
+    expiry_visa: "",
   });
 
   // Files State
@@ -55,6 +56,7 @@ const EmployeeModal = ({ employeeId, mode, onClose, onSaveSuccess }) => {
     medicalInsurance: null,
     passport: null,
     labourContract: null,
+    visa: null,
   });
 
   // Existing image URLs
@@ -65,6 +67,7 @@ const EmployeeModal = ({ employeeId, mode, onClose, onSaveSuccess }) => {
     medicalInsurance: null,
     passport: null,
     labourContract: null,
+    visa: null,
   });
 
   // Previews
@@ -75,6 +78,7 @@ const EmployeeModal = ({ employeeId, mode, onClose, onSaveSuccess }) => {
     medicalInsurance: null,
     passport: null,
     labourContract: null,
+    visa: null,
   });
 
   // Lightbox State
@@ -107,6 +111,7 @@ const EmployeeModal = ({ employeeId, mode, onClose, onSaveSuccess }) => {
           expiry_medicalInsurance: expiries.medicalInsurance || "",
           expiry_passport: expiries.passport || "",
           expiry_labourContract: expiries.labourContract || "",
+          expiry_visa: expiries.visa || "",
         });
         if (data.documents) {
           setExistingDocs({
@@ -116,6 +121,7 @@ const EmployeeModal = ({ employeeId, mode, onClose, onSaveSuccess }) => {
             medicalInsurance: data.documents.medicalInsurance || null,
             passport: data.documents.passport || null,
             labourContract: data.documents.labourContract || null,
+            visa: data.documents.visa || null,
           });
         }
         setError(null);
@@ -394,6 +400,7 @@ const EmployeeModal = ({ employeeId, mode, onClose, onSaveSuccess }) => {
                         { label: "Labour Contract", key: "labourContract" },
                         { label: "Medical Insurance", key: "medicalInsurance" },
                         { label: "Passport", key: "passport" },
+                        { label: "Visa Expiry Doc", key: "visa" },
                       ].map((doc) => {
                         const url = existingDocs[doc.key];
                         const expiryDateStr = formData[`expiry_${doc.key}`];
@@ -709,6 +716,7 @@ const EmployeeModal = ({ employeeId, mode, onClose, onSaveSuccess }) => {
                       { label: "Labour Contract", key: "labourContract" },
                       { label: "Medical Insurance", key: "medicalInsurance" },
                       { label: "Passport", key: "passport" },
+                      { label: "Visa Expiry Doc", key: "visa" },
                     ].map((doc) => {
                       const isNewPdf = previews[doc.key] && (typeof previews[doc.key] === "string" && !previews[doc.key].startsWith('data:image') && previews[doc.key].includes('.pdf'));
                       const isOldPdf = !previews[doc.key] && existingDocs[doc.key] && (existingDocs[doc.key].includes('.pdf') || existingDocs[doc.key].startsWith('data:application/pdf'));

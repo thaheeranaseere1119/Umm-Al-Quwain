@@ -20,6 +20,7 @@ const EmployeeCard = ({ employee, onView, onUpdate, onDelete }) => {
         medicalInsurance: "Medical Insurance",
         passport: "Passport",
         labourContract: "Labour Contract",
+        visa: "Visa",
       };
       
       const docName = readableNames[docType] || docType;
