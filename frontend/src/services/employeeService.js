@@ -240,9 +240,30 @@ export const getEmployees = async () => {
 // GET Employee By ID
 export const getEmployeeById = async (id) => {
   if (!USE_FIREBASE) {
-    const res = await fetch(`/api/employees/${id}`);
-    if (!res.ok) throw new Error("Employee not found");
-    return await res.json();
+    try {
+      const res = await fetch(`/api/employees/${id}`);
+      if (res.ok) {
+        return await res.json();
+      }
+      console.warn(`Server getEmployeeById returned status ${res.status} for ${id}. Trying local fallback.`);
+    } catch (err) {
+      console.error("Network error fetching employee details. Trying local fallback:", err);
+    }
+
+    // Fallback to local cache
+    try {
+      const cachedData = localStorage.getItem("ummal_quwain_employees");
+      const cached = cachedData ? JSON.parse(cachedData) : [];
+      const localEmployee = cached.find((emp) => emp.id === id);
+      if (localEmployee) {
+        console.log("Found employee profile in local cache fallback:", localEmployee);
+        return localEmployee;
+      }
+    } catch (err) {
+      console.error("Failed to fetch from local storage:", err);
+    }
+    
+    throw new Error("Employee not found");
   }
 
   try {
@@ -408,55 +429,95 @@ export const createEmployee = async (employeeData, files, onProgressCallback) =>
 export const updateEmployee = async (id, employeeData, files, existingDocs, onProgressCallback) => {
   if (!USE_FIREBASE) {
     const compressedFiles = await getCompressedFiles(files);
-    return new Promise((resolve, reject) => {
-      const formData = new FormData();
-      Object.keys(employeeData).forEach((key) => {
-        formData.append(key, employeeData[key]);
-      });
-      Object.keys(compressedFiles).forEach((key) => {
-        if (compressedFiles[key]) formData.append(key, compressedFiles[key]);
-      });
 
-      const xhr = new XMLHttpRequest();
-      xhr.open("PUT", `/api/employees/${id}`);
+    const performUpdateXHR = () => {
+      return new Promise((resolve, reject) => {
+        const formData = new FormData();
+        Object.keys(employeeData).forEach((key) => {
+          formData.append(key, employeeData[key]);
+        });
+        Object.keys(compressedFiles).forEach((key) => {
+          if (compressedFiles[key]) formData.append(key, compressedFiles[key]);
+        });
 
-      xhr.upload.onprogress = (event) => {
-        if (event.lengthComputable && onProgressCallback) {
-          const percentage = Math.round((event.loaded / event.total) * 100);
-          onProgressCallback(percentage);
-        }
-      };
+        const xhr = new XMLHttpRequest();
+        xhr.open("PUT", `/api/employees/${id}`);
 
-      xhr.onload = () => {
-        let response = {};
-        try {
-          response = JSON.parse(xhr.responseText);
-        } catch (e) {
-          console.error("Response parsing error:", xhr.responseText);
-          response = { message: `Server error (${xhr.status}). Please check server logs.` };
-        }
-
-        if (xhr.status >= 200 && xhr.status < 300) {
-          try {
-            const cachedData = localStorage.getItem("ummal_quwain_employees");
-            const cached = cachedData ? JSON.parse(cachedData) : [];
-            const index = cached.findIndex(emp => emp.id === id);
-            if (index !== -1 && response.employee) {
-              cached[index] = response.employee;
-              localStorage.setItem("ummal_quwain_employees", JSON.stringify(cached));
-            }
-          } catch (err) {
-            console.error("Failed to sync updated employee to localStorage:", err);
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable && onProgressCallback) {
+            const percentage = Math.round((event.loaded / event.total) * 100);
+            onProgressCallback(percentage);
           }
-          resolve(response);
-        } else {
-          reject(new Error(response.message || `Request failed with status ${xhr.status}`));
-        }
-      };
+        };
 
-      xhr.onerror = () => reject(new Error("Connection error during upload."));
-      xhr.send(formData);
-    });
+        xhr.onload = () => {
+          let response = {};
+          try {
+            response = JSON.parse(xhr.responseText);
+          } catch (e) {
+            console.error("Response parsing error:", xhr.responseText);
+            response = { message: `Server error (${xhr.status}). Please check server logs.` };
+          }
+
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve(response);
+          } else {
+            const err = new Error(response.message || `Request failed with status ${xhr.status}`);
+            err.status = xhr.status;
+            reject(err);
+          }
+        };
+
+        xhr.onerror = () => reject(new Error("Connection error during upload."));
+        xhr.send(formData);
+      });
+    };
+
+    let result;
+    try {
+      result = await performUpdateXHR();
+    } catch (err) {
+      if (err.status === 404) {
+        console.warn("Update returned 404 (container desync). Attempting to restore database to this container before retrying...");
+        try {
+          const cachedData = localStorage.getItem("ummal_quwain_employees");
+          const cached = cachedData ? JSON.parse(cachedData) : [];
+          
+          await fetch("/api/employees/restore", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ employees: cached }),
+          });
+
+          // Retry the update
+          result = await performUpdateXHR();
+        } catch (retryErr) {
+          console.error("Retry failed:", retryErr);
+          throw retryErr;
+        }
+      } else {
+        throw err;
+      }
+    }
+
+    try {
+      const cachedData = localStorage.getItem("ummal_quwain_employees");
+      const cached = cachedData ? JSON.parse(cachedData) : [];
+      const index = cached.findIndex(emp => emp.id === id);
+      if (result.employee) {
+        if (index !== -1) {
+          cached[index] = result.employee;
+        } else {
+          cached.push(result.employee);
+        }
+        localStorage.setItem("ummal_quwain_employees", JSON.stringify(cached));
+      }
+    } catch (err) {
+      console.error("Failed to sync updated employee to localStorage:", err);
+    }
+    return result;
   }
 
   try {
