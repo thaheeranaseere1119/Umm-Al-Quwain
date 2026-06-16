@@ -250,7 +250,14 @@ export const createEmployee = async (employeeData, files, onProgressCallback) =>
       };
 
       xhr.onload = () => {
-        const response = JSON.parse(xhr.responseText);
+        let response = {};
+        try {
+          response = JSON.parse(xhr.responseText);
+        } catch (e) {
+          console.error("Response parsing error:", xhr.responseText);
+          response = { message: `Server error (${xhr.status}). Please check server logs.` };
+        }
+
         if (xhr.status >= 200 && xhr.status < 300) {
           try {
             const cachedData = localStorage.getItem("ummal_quwain_employees");
@@ -264,7 +271,7 @@ export const createEmployee = async (employeeData, files, onProgressCallback) =>
           }
           resolve(response);
         } else {
-          reject(new Error(response.message || "Failed to create employee"));
+          reject(new Error(response.message || `Request failed with status ${xhr.status}`));
         }
       };
 
@@ -384,7 +391,14 @@ export const updateEmployee = async (id, employeeData, files, existingDocs, onPr
       };
 
       xhr.onload = () => {
-        const response = JSON.parse(xhr.responseText);
+        let response = {};
+        try {
+          response = JSON.parse(xhr.responseText);
+        } catch (e) {
+          console.error("Response parsing error:", xhr.responseText);
+          response = { message: `Server error (${xhr.status}). Please check server logs.` };
+        }
+
         if (xhr.status >= 200 && xhr.status < 300) {
           try {
             const cachedData = localStorage.getItem("ummal_quwain_employees");
@@ -399,7 +413,7 @@ export const updateEmployee = async (id, employeeData, files, existingDocs, onPr
           }
           resolve(response);
         } else {
-          reject(new Error(response.message || "Failed to update employee"));
+          reject(new Error(response.message || `Request failed with status ${xhr.status}`));
         }
       };
 

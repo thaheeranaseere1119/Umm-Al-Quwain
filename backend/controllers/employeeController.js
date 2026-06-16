@@ -34,26 +34,35 @@ const handleFileUpload = async (file, salaryNo, docType, serverUrl) => {
     fs.renameSync(file.path, newPath);
     return `${serverUrl}/uploads/${localFileName}`;
   } else {
-    // Upload to Firebase Storage
+    // Upload to Firebase Storage with a strict 4-second timeout to prevent serverless function hangs
     try {
-      const [uploadedFile] = await bucket.upload(file.path, {
-        destination: destination,
-        metadata: {
-          contentType: file.mimetype,
-        },
-      });
+      const uploadPromise = (async () => {
+        const [uploadedFile] = await bucket.upload(file.path, {
+          destination: destination,
+          metadata: {
+            contentType: file.mimetype,
+          },
+        });
+        await uploadedFile.makePublic();
+        return uploadedFile;
+      })();
 
-      // Make the file public (or use standard public URL)
-      await uploadedFile.makePublic();
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Firebase Storage upload timed out (4s)")), 4000)
+      );
+
+      await Promise.race([uploadPromise, timeoutPromise]);
       
       // Delete temporary local file
-      fs.unlinkSync(file.path);
+      if (fs.existsSync(file.path)) {
+        fs.unlinkSync(file.path);
+      }
 
       // Return the public URL
       return `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(destination)}?alt=media`;
     } catch (error) {
-      console.error(`Firebase upload failed for ${docType}:`, error.message);
-      if (error.message.includes("bucket") || error.code === 404 || error.message.includes("404") || error.message.includes("not found")) {
+      console.error(`Firebase upload failed or timed out for ${docType}:`, error.message);
+      if (error.message.includes("bucket") || error.code === 404 || error.message.includes("404") || error.message.includes("not found") || error.message.includes("timed out")) {
         console.warn("Setting isBucketAvailable to false to bypass future bucket uploads.");
         isBucketAvailable = false;
       }
