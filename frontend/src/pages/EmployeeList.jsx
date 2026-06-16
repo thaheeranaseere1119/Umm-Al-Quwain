@@ -127,7 +127,7 @@ const EmployeeList = () => {
       emp.nationality,
       emp.status,
       emp.age || "N/A",
-      emp.salary ? `${parseFloat(emp.salary).toLocaleString()}` : "N/A",
+      emp.salary ? `${emp.salary}` : "N/A",
     ]);
 
     autoTable(doc, {

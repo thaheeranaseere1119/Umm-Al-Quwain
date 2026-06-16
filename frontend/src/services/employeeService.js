@@ -260,7 +260,7 @@ export const createEmployee = async (employeeData, files, onProgressCallback) =>
     const finalData = {
       ...cleanedEmployeeData,
       age: cleanedEmployeeData.age ? parseInt(cleanedEmployeeData.age) : null,
-      salary: cleanedEmployeeData.salary ? parseFloat(cleanedEmployeeData.salary) : null,
+      salary: cleanedEmployeeData.salary || null,
       documentExpiry,
       documents: docUrls,
       createdAt: new Date().toISOString(),
@@ -394,7 +394,7 @@ export const updateEmployee = async (id, employeeData, files, existingDocs, onPr
     const finalData = {
       ...cleanedEmployeeData,
       age: cleanedEmployeeData.age ? parseInt(cleanedEmployeeData.age) : null,
-      salary: cleanedEmployeeData.salary ? parseFloat(cleanedEmployeeData.salary) : null,
+      salary: cleanedEmployeeData.salary !== undefined ? cleanedEmployeeData.salary : null,
       documentExpiry,
       documents: updatedDocs,
       updatedAt: new Date().toISOString(),

@@ -44,12 +44,23 @@ if (fs.existsSync(serviceAccountPath)) {
     });
     db = admin.firestore();
     bucket = admin.storage().bucket();
+    
+    // Verify connection to Firestore works
+    await db.collection("employees").limit(1).get();
+    
     useLocalFallback = false;
     console.log("Firebase initialized successfully using service account JSON file.");
   } catch (error) {
-    console.error("Failed to initialize Firebase with JSON file:", error.message);
+    console.error("Firebase connection test failed with JSON file. Error:", error.message);
+    try {
+      await admin.app().delete();
+    } catch (_) {}
+    db = null;
+    bucket = null;
   }
-} else if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_CLIENT_EMAIL && privateKey) {
+}
+
+if (useLocalFallback && process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_CLIENT_EMAIL && privateKey) {
   try {
     admin.initializeApp({
       credential: admin.credential.cert({
@@ -61,15 +72,24 @@ if (fs.existsSync(serviceAccountPath)) {
     });
     db = admin.firestore();
     bucket = admin.storage().bucket();
+    
+    // Verify connection to Firestore works
+    await db.collection("employees").limit(1).get();
+    
     useLocalFallback = false;
     console.log("Firebase Admin SDK initialized successfully via Environment Variables.");
   } catch (error) {
-    console.error("Failed to initialize Firebase with Environment Variables:", error.message);
+    console.error("Firebase connection test failed with Environment Variables. Error:", error.message);
+    try {
+      await admin.app().delete();
+    } catch (_) {}
+    db = null;
+    bucket = null;
   }
 }
 
 if (useLocalFallback) {
-  console.warn("⚠️ Firebase configuration missing or invalid. Running in LOCAL FALLBACK MODE.");
+  console.warn("⚠️ Firebase configuration missing, invalid, or revoked. Running in LOCAL FALLBACK MODE.");
   console.warn("Data will be stored in backend/data.json and uploads in backend/uploads/.");
 }
 

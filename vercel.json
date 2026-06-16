@@ -19,12 +19,8 @@
       "dest": "/backend/server.js"
     },
     {
-      "src": "/assets/(.*)",
-      "dest": "/frontend/assets/$1"
-    },
-    {
-      "src": "/favicon.ico",
-      "dest": "/frontend/favicon.ico"
+      "src": "/(.*\\.(?:png|svg|json|ico|js|css|webp|jpg|jpeg|gif|woff2|woff|ttf|otf))",
+      "dest": "/frontend/$1"
     },
     {
       "src": "/(.*)",

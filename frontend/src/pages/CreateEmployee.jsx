@@ -432,11 +432,11 @@ const CreateEmployee = () => {
               <div>
                 <label className="block text-xs font-semibold text-slate-200 mb-1">Salary (Dirham AED)</label>
                 <input
-                  type="number"
+                  type="text"
                   name="salary"
                   value={formData.salary}
                   onChange={handleInputChange}
-                  placeholder="e.g. 6500"
+                  placeholder="e.g. 6500.00"
                   className="w-full text-white bg-white/5 border border-white/10 px-3 py-2 rounded-lg text-sm focus:outline-none focus:border-teal-500 focus:bg-white/10 focus:ring-1 focus:ring-teal-500/20 transition-all"
                 />
               </div>

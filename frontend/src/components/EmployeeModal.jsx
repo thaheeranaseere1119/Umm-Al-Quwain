@@ -316,7 +316,7 @@ const EmployeeModal = ({ employeeId, mode, onClose, onSaveSuccess }) => {
                     </div>
                     <div className="flex justify-between border-t border-white/10 pt-2 mt-2">
                       <span className="text-slate-350">Salary (AED)</span>
-                      <span className="font-bold text-teal-400">{formData.salary ? `${parseFloat(formData.salary).toLocaleString()} AED` : "N/A"}</span>
+                      <span className="font-bold text-teal-400">{formData.salary ? `${formData.salary} AED` : "N/A"}</span>
                     </div>
                   </div>
                 </BorderGlow>
@@ -648,12 +648,12 @@ const EmployeeModal = ({ employeeId, mode, onClose, onSaveSuccess }) => {
                     <div>
                       <label className="block text-xs font-semibold text-slate-200 mb-1">Salary (Dirham AED)</label>
                       <input
-                        type="number"
+                        type="text"
                         name="salary"
                         value={formData.salary}
                         onChange={handleInputChange}
                         className="w-full text-sm bg-white/5 border border-white/10 px-3 py-2 rounded-lg text-white focus:outline-none focus:border-teal-500 focus:bg-white/10 transition-all"
-                        placeholder="e.g. 5000"
+                        placeholder="e.g. 5000.00"
                       />
                     </div>
                   </div>
