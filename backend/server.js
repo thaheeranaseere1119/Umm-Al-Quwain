@@ -6,6 +6,7 @@ import dotenv from "dotenv";
 import cron from "node-cron";
 import { checkDocumentExpiries } from "./utils/expiryChecker.js";
 import employeeRoutes from "./routes/employeeRoutes.js";
+import { uploadsDir } from "./config/firebase.js";
 
 // Schedule daily expiry check at midnight
 cron.schedule("0 0 * * *", async () => {
@@ -37,7 +38,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Serve uploads directory statically for Local Fallback mode
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use("/uploads", express.static(uploadsDir));
 
 // Basic Authentication route (passcode protection)
 app.post("/api/auth/login", (req, res) => {
