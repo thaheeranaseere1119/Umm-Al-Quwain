@@ -12,6 +12,21 @@ const handleFileUpload = async (file, salaryNo, docType, serverUrl) => {
   const destination = `employees/${salaryNo}/${docType}_${Date.now()}${ext}`;
 
   if (useLocalFallback || !isBucketAvailable) {
+    // On Vercel, local storage is ephemeral. Convert to Base64 data URL for database persistence.
+    if (process.env.VERCEL) {
+      try {
+        const fileBuffer = fs.readFileSync(file.path);
+        const base64Data = fileBuffer.toString("base64");
+        const dataUrl = `data:${file.mimetype};base64,${base64Data}`;
+        if (fs.existsSync(file.path)) {
+          fs.unlinkSync(file.path);
+        }
+        return dataUrl;
+      } catch (err) {
+        console.error("Base64 conversion failed on Vercel fallback:", err.message);
+      }
+    }
+
     // Keep local, return local server URL
     // Rename file to a predictable name in the uploads directory
     const localFileName = `${salaryNo}_${docType}_${Date.now()}${ext}`;
@@ -42,6 +57,22 @@ const handleFileUpload = async (file, salaryNo, docType, serverUrl) => {
         console.warn("Setting isBucketAvailable to false to bypass future bucket uploads.");
         isBucketAvailable = false;
       }
+
+      // On Vercel, local storage is ephemeral. Convert to Base64 data URL for database persistence.
+      if (process.env.VERCEL) {
+        try {
+          const fileBuffer = fs.readFileSync(file.path);
+          const base64Data = fileBuffer.toString("base64");
+          const dataUrl = `data:${file.mimetype};base64,${base64Data}`;
+          if (fs.existsSync(file.path)) {
+            fs.unlinkSync(file.path);
+          }
+          return dataUrl;
+        } catch (err) {
+          console.error("Base64 conversion failed on Vercel fallback after upload failure:", err.message);
+        }
+      }
+
       // Fallback: if Firebase upload fails, save locally
       const localFileName = `${salaryNo}_${docType}_${Date.now()}${ext}`;
       const newPath = path.join(uploadsDir, localFileName);
