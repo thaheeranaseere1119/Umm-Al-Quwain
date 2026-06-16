@@ -86,6 +86,48 @@ const compressImageToBase64 = (file, maxW = 800, maxH = 800, quality = 0.6) => {
   });
 };
 
+// Helper: Convert Base64 data URL back to Blob
+const dataURLtoBlob = (dataurl) => {
+  const arr = dataurl.split(',');
+  const mime = arr[0].match(/:(.*?);/)[1];
+  const bstr = atob(arr[1]);
+  let n = bstr.length;
+  const u8arr = new Uint8Array(n);
+  while (n--) {
+    u8arr[n] = bstr.charCodeAt(n);
+  }
+  return new Blob([u8arr], { type: mime });
+};
+
+// Helper: Compress all image files in the select files list
+const getCompressedFiles = async (files) => {
+  const compressed = {};
+  const keys = Object.keys(files);
+  for (const key of keys) {
+    const file = files[key];
+    if (!file) {
+      compressed[key] = null;
+      continue;
+    }
+    
+    // Skip compression for PDFs
+    if (file.type === "application/pdf" || (file.name && file.name.toLowerCase().endsWith(".pdf"))) {
+      compressed[key] = file;
+    } else {
+      try {
+        // Compress to max 800x800 JPEG with 0.6 quality (creates a ~100KB file)
+        const base64 = await compressImageToBase64(file, 800, 800, 0.6);
+        const blob = dataURLtoBlob(base64);
+        compressed[key] = new File([blob], file.name, { type: file.type });
+      } catch (err) {
+        console.error("Client-side compression failed for:", key, err);
+        compressed[key] = file; // Fallback to original file if compression fails
+      }
+    }
+  }
+  return compressed;
+};
+
 // GET Expiring Documents
 export const getExpiringDocuments = async () => {
   const res = await fetch('/api/employees/expiring');
@@ -160,13 +202,14 @@ export const getEmployeeById = async (id) => {
 // CREATE Employee
 export const createEmployee = async (employeeData, files, onProgressCallback) => {
   if (!USE_FIREBASE) {
+    const compressedFiles = await getCompressedFiles(files);
     return new Promise((resolve, reject) => {
       const formData = new FormData();
       Object.keys(employeeData).forEach((key) => {
         formData.append(key, employeeData[key]);
       });
-      Object.keys(files).forEach((key) => {
-        if (files[key]) formData.append(key, files[key]);
+      Object.keys(compressedFiles).forEach((key) => {
+        if (compressedFiles[key]) formData.append(key, compressedFiles[key]);
       });
 
       const xhr = new XMLHttpRequest();
@@ -283,13 +326,14 @@ export const createEmployee = async (employeeData, files, onProgressCallback) =>
 // UPDATE Employee
 export const updateEmployee = async (id, employeeData, files, existingDocs, onProgressCallback) => {
   if (!USE_FIREBASE) {
+    const compressedFiles = await getCompressedFiles(files);
     return new Promise((resolve, reject) => {
       const formData = new FormData();
       Object.keys(employeeData).forEach((key) => {
         formData.append(key, employeeData[key]);
       });
-      Object.keys(files).forEach((key) => {
-        if (files[key]) formData.append(key, files[key]);
+      Object.keys(compressedFiles).forEach((key) => {
+        if (compressedFiles[key]) formData.append(key, compressedFiles[key]);
       });
 
       const xhr = new XMLHttpRequest();
