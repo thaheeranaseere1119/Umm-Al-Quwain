@@ -76,18 +76,18 @@ const EmployeeCard = ({ employee, onView, onUpdate, onDelete }) => {
         <div>
           <div className="flex items-center gap-2 flex-wrap">
             <h3 className="font-semibold text-white text-base">{employee.name}</h3>
-            <span className={`text-[15px] px-2.5 py-1 rounded-full font-medium ${
+            <span className={`text-[16px] px-2.5 py-1 rounded-full font-medium ${
               employee.gender === "Male" 
                 ? "bg-blue-950/50 text-blue-300 border border-blue-500/25" 
                 : "bg-rose-950/50 text-rose-300 border border-rose-500/25"
             }`}>
               {employee.gender}
             </span>
-            <span className="text-[15px] bg-white/5 text-slate-300 border border-white/10 px-2.5 py-1 rounded-full font-medium">
+            <span className="text-[16px] bg-white/5 text-slate-300 border border-white/10 px-2.5 py-1 rounded-full font-medium">
               {employee.nationality}
             </span>
             {alert && (
-              <span className={`flex items-center gap-1.5 text-[15px] px-2.5 py-1 rounded-full font-semibold border ${
+              <span className={`flex items-center gap-1.5 text-[16px] px-2.5 py-1 rounded-full font-semibold border ${
                 alert.status === "expired"
                   ? "bg-red-950/50 text-red-350 border-red-500/35"
                   : "bg-amber-950/50 text-amber-350 border-amber-500/35"
