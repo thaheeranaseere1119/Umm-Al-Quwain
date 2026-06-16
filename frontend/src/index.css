@@ -1,0 +1,91 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Outfit', sans-serif;
+  --font-serif: 'Playfair Display', serif;
+
+  --color-gold-50: #fcf9f2;
+  --color-gold-100: #f7efdd;
+  --color-gold-200: #eedeb9;
+  --color-gold-300: #e1c58c;
+  --color-gold-400: #d2a760;
+  --color-gold-500: #c5a880; /* Desert Gold primary */
+  --color-gold-600: #af874a;
+  --color-gold-700: #926a3a;
+  --color-gold-800: #775532;
+  --color-gold-950: #402c19;
+
+  --color-teal-50: #f0f7f7;
+  --color-teal-100: #d9ebeb;
+  --color-teal-200: #b7d6d6;
+  --color-teal-300: #89b7b8;
+  --color-teal-400: #579395;
+  --color-teal-500: #004f4f; /* Deep Teal primary */
+  --color-teal-600: #336a6c;
+  --color-teal-700: #295153;
+  --color-teal-800: #203f40;
+  --color-teal-950: #002d2d;
+}
+
+html {
+  font-size: 21px;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: #f8fafc;
+  color: #1e293b;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Glassmorphism helpers */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.glass-panel-dark {
+  background: rgba(0, 45, 45, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Subtle micro-animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+/* Image zoom styling */
+.zoomable-image {
+  transition: transform 0.3s ease;
+  cursor: zoom-in;
+}
+
+.zoomable-image:active {
+  cursor: grabbing;
+}
