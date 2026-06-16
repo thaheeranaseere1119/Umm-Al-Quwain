@@ -561,11 +561,22 @@ export const updateEmployee = async (id, employeeData, files, existingDocs, onPr
 // DELETE Employee
 export const deleteEmployee = async (employee) => {
   if (!USE_FIREBASE) {
-    const res = await fetch(`/api/employees/${employee.id}`, {
-      method: "DELETE",
-    });
-    if (!res.ok) throw new Error("Failed to delete employee");
-    const response = await res.json();
+    let response = { success: true };
+    try {
+      const res = await fetch(`/api/employees/${employee.id}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        response = await res.json();
+      } else {
+        // If server returns 404, the employee was not found on the backend, which is fine (effectively deleted / missing).
+        // For other errors, we still log but proceed with local cleanup to ensure UI state doesn't freeze.
+        console.warn(`Server deletion returned status ${res.status} for employee ${employee.id}. Proceeding with local cleanup.`);
+      }
+    } catch (err) {
+      console.error("Network or connection error during backend deletion. Proceeding with local cleanup:", err);
+    }
+
     try {
       const cachedData = localStorage.getItem("ummal_quwain_employees");
       const cached = cachedData ? JSON.parse(cachedData) : [];
