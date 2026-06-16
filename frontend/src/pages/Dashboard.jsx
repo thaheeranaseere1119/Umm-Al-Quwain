@@ -71,7 +71,7 @@ const Dashboard = () => {
           <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
               <span className="text-[10px] text-gold-400 font-bold uppercase tracking-widest bg-gold-950/45 px-3 py-1 rounded-full border border-gold-500/20">
-                UAQ Beach Hotel Operations
+                Umm-Al-Quwain Beach Hotel Operations
               </span>
               <h1 className="text-xl md:text-2xl font-bold font-serif text-white mt-3 leading-tight">
                 Umm Al Quwain Beach Hotel - Employee Management System
