@@ -18,7 +18,8 @@ import {
 } from "firebase/storage";
 
 // Toggle this flag to switch between Direct Firebase Mode and Local Express Server Mode
-export const USE_FIREBASE = false;
+// Automatically uses Firebase in production, and local fallback in development
+export const USE_FIREBASE = import.meta.env.PROD || import.meta.env.VITE_USE_FIREBASE === "true";
 
 // Connection timeout helper
 const withTimeout = (promise, ms = 6000, context = "Firebase operation") => {
@@ -130,9 +131,63 @@ const getCompressedFiles = async (files) => {
 
 // GET Expiring Documents
 export const getExpiringDocuments = async () => {
-  const res = await fetch('/api/employees/expiring');
-  if (!res.ok) throw new Error('Failed to fetch expiring documents');
-  return await res.json();
+  if (!USE_FIREBASE) {
+    const res = await fetch('/api/employees/expiring');
+    if (!res.ok) throw new Error('Failed to fetch expiring documents');
+    return await res.json();
+  }
+
+  try {
+    const employees = await getEmployees();
+    const warningDays = 30;
+    const now = new Date();
+    const alerts = [];
+
+    employees.forEach((emp) => {
+      const expiries = emp.documentExpiry || {};
+      Object.entries(expiries).forEach(([docType, dateStr]) => {
+        if (!dateStr) return;
+        const expiryDate = new Date(dateStr);
+        const diffMs = expiryDate - now;
+        const diffDays = diffMs / (1000 * 60 * 60 * 24);
+
+        const readableNames = {
+          emiratesId: "Emirates ID",
+          labourCard: "Labour Card",
+          medicalInsurance: "Medical Insurance",
+          passport: "Passport",
+          labourContract: "Labour Contract",
+          visa: "Visa",
+        };
+        const docName = readableNames[docType] || docType;
+
+        if (diffDays < 0) {
+          alerts.push({
+            employeeId: emp.id,
+            employeeName: emp.name,
+            document: docName,
+            expiryDate: expiryDate.toISOString().split("T")[0],
+            daysLeft: Math.floor(diffDays),
+            status: "expired",
+          });
+        } else if (diffDays <= warningDays) {
+          alerts.push({
+            employeeId: emp.id,
+            employeeName: emp.name,
+            document: docName,
+            expiryDate: expiryDate.toISOString().split("T")[0],
+            daysLeft: Math.ceil(diffDays),
+            status: "expiring",
+          });
+        }
+      });
+    });
+
+    return alerts;
+  } catch (error) {
+    console.error("Client-side expiry check error:", error);
+    throw error;
+  }
 };
 
 // Helper to delete an item from Firebase Storage

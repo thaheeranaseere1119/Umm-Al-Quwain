@@ -3,13 +3,13 @@ import { Link, useNavigate } from "react-router-dom";
 import { UserPlus, Users, LogOut, UtensilsCrossed, Building2 } from "lucide-react";
 import StatsDashboard from "../components/StatsDashboard";
 import BorderGlow from "../components/BorderGlow";
+import { getExpiringDocuments } from "../services/employeeService";
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const [alerts, setAlerts] = useState([]);
   useEffect(() => {
-    fetch('/api/employees/expiring')
-      .then(res => res.json())
+    getExpiringDocuments()
       .then(data => setAlerts(data))
       .catch(err => console.error('Failed to fetch alerts', err));
   }, []);
